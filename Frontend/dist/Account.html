@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MyManager - Accounts</title>
+<link rel="stylesheet" href="./stylesheet/output.css">
+<link rel="shortcut icon" href="./graphics/google-tasks-logo-main-icon.png" type="image/x-icon">
+<style>
+    .modal-overlay {
+        position: fixed;
+        top: 0; left: 0; width: 100%; height: 100%;
+        background-color: rgba(0,0,0,0.5);
+        display: none; justify-content: center; align-items: center; z-index:1000;
+    }
+    .modal-overlay.show { display:flex; }
+</style>
+</head>
+<body class="bg-gray-900 text-white">
+
+<header class="flex justify-between items-center px-6 py-3 bg-gray-800">
+    <div class="flex items-center space-x-3">
+        <img src="./graphics/google-tasks-logo-main-icon.png" alt="logo" class="w-12 h-12">
+        <h1 class="text-2xl font-bold">My Manager</h1>
+    </div>
+    <nav class="flex space-x-10 text-lg font-medium">
+        <a href="./mainDashboard.html" class="hover:text-blue-400">Dashboard(Report)</a>
+        <a href="./Task.html" class="hover:text-blue-400">Task</a>
+        <a href="./log.html" class="hover:text-blue-400">Log</a>
+    </nav>
+</header>
+
+<!-- User View -->
+<div id="userDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+    <h2 class=" bg-blue-600 text-white rounded-t-3xl p-6 flex items-center justify-between font-bold text-2xl">Your Account Details</h2>
+    <div class="max-h-[40vh] overflow-y-auto rounded-lg shadow">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Id</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Name</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Email</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Role</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Phone</th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">Created by</th>
+                </tr>
+            </thead>
+            <tbody id="currentUserTableBody" class="bg-white divide-y text-black divide-gray-200"></tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Admin View -->
+<div id="adminDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+    <div class="bg-[#882adb] text-white rounded-t-3xl p-6 flex items-center justify-between">
+        <div>
+            <h2 class="text-2xl font-bold">Account Management</h2>
+            <p class="mt-1">Manage all user accounts ...</p>
+        </div>
+        <button id="addUserBtn" class="bg-white text-[#882adb] rounded-lg px-4 py-2 font-semibold hover:bg-gray-200 hover:shadow-lg">+ Add User</button>
+    </div>
+
+    <section class="p-6 text-gray-900">
+        <div class="flex items-center space-x-4 mb-4">
+            <input type="email" id="searchEmailInput" placeholder="Search by Email..." class="flex-1 p-2 rounded border border-gray-300">
+            <button id="searchBtn" class="bg-[#882adb] text-white rounded-lg px-4 py-2 font-semibold hover:bg-[#6a1bbd]">Search</button>
+            <button id="showAllBtn" class="bg-gray-500 text-white rounded-lg px-4 py-2 font-semibold hover:bg-gray-600">Show All</button>
+        </div>
+        <div class="max-h-[53vh] overflow-y-auto rounded-lg shadow">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50 sticky top-0 z-15">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Id</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created by</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="userTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<!-- Add Popup -->
+<div id="addPopup" class="modal-overlay">
+    <div class="bg-white p-6 rounded-xl w-96 relative">
+        <button id="closeAddPopup" class="absolute top-2 right-3 text-gray-500 text-xl hover:text-gray-700">&times;</button>
+        <h1 class="text-xl font-semibold mb-4 text-black">Add New User</h1>
+        <form id="addUserForm" class="flex flex-col gap-3 text-black">
+            <label class="text-lg font-semibold">Name</label>
+            <input type="text" placeholder="Name" class="border p-2 rounded" />
+            <label class="text-lg font-semibold">Email</label>
+            <input type="email" placeholder="Email" class="border p-2 rounded" />
+            <label class="text-lg font-semibold">Phone</label>
+            <input type="tel" placeholder="Phone Number" class="border p-2 rounded" />
+            <label class="text-lg font-semibold">Password</label>
+            <div class="relative">
+                <input type="password" placeholder="Password" id="passwordInput" class="border p-2 rounded w-full" />
+                <button type="button" id="togglePasswordBtn" class="absolute inset-y-0 right-0 pr-3 flex items-center text-sm leading-5 text-gray-600">Show</button>
+            </div>
+            <label class="text-lg font-semibold">Role</label>
+            <select class="border p-2 rounded">
+                <option value="">Select Role</option>
+                <option value="admin">admin</option>
+                <option value="it">IT</option>
+                <option value="marketing">Marketing</option>
+                <option value="sales">Sales</option>
+                <option value="frontend">Frontend</option>
+                <option value="backend">Backend</option>
+                <option value="hr">HR</option>
+            </select>
+            <p id="formError" class="text-red-600 text-sm"></p>
+            <button type="submit" class="bg-[#882adb] text-white rounded-lg px-4 py-2 mt-2 hover:bg-[#6a1bbd]">Submit</button>
+        </form>
+    </div>
+</div>
+
+<!-- Edit Popup -->
+<div id="editPopup" class="modal-overlay">
+    <div class="bg-white p-6 rounded-xl w-96 relative">
+        <button id="closeEditPopup" class="absolute top-2 right-3 text-gray-500 text-xl hover:text-gray-700">&times;</button>
+        <h1 class="text-xl font-semibold mb-4 text-black">Edit User</h1>
+        <form id="editUserForm" class="flex flex-col gap-3 text-black">
+            <label class="text-lg font-semibold">Name</label>
+            <input type="text" id="editName" placeholder="Name" class="border p-2 rounded"  />
+            <label class="text-lg font-semibold">Email</label>
+            <input type="email" id="editEmail" placeholder="Email" class="border p-2 rounded" disabled />
+            <label class="text-lg font-semibold">Phone</label>
+            <input type="tel" id="editPhone" placeholder="Phone Number" class="border p-2 rounded"  />
+            <label class="text-lg font-semibold">Role</label>
+            <select id="editRole" class="border p-2 rounded">
+                <option value="admin">admin</option>
+                <option value="it">IT</option>
+                <option value="marketing">Marketing</option>
+                <option value="sales">Sales</option>
+                <option value="frontend">Frontend</option>
+                <option value="backend">Backend</option>
+                <option value="hr">HR</option>
+            </select>
+            <p id="editFormError" class="text-red-600 text-sm"></p>
+            <button type="submit" class="bg-[#882adb] text-white rounded-lg px-4 py-2 mt-2 hover:bg-[#6a1bbd]">Save Changes</button>
+        </form>
+    </div>
+</div>
+
+<script>
+// Utility: Show/Hide Popups
+const showPopup = (p) => p.classList.add('show');
+const hidePopup = (p) => p.classList.remove('show');
+
+// Elements
+const addUserBtn = document.getElementById('addUserBtn');
+const addPopup = document.getElementById('addPopup');
+const closeAddPopup = document.getElementById('closeAddPopup');
+const addUserForm = document.getElementById('addUserForm');
+const formError = document.getElementById('formError');
+const passwordInput = document.getElementById('passwordInput');
+const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+
+const editPopup = document.getElementById('editPopup');
+const closeEditPopup = document.getElementById('closeEditPopup');
+const editUserForm = document.getElementById('editUserForm');
+const editName = document.getElementById('editName');
+const editEmail = document.getElementById('editEmail');
+const editPhone = document.getElementById('editPhone');
+const editRole = document.getElementById('editRole');
+const editFormError = document.getElementById('editFormError');
+
+const userTableBody = document.getElementById('userTableBody');
+const searchEmailInput = document.getElementById('searchEmailInput');
+const searchBtn = document.getElementById('searchBtn');
+const showAllBtn = document.getElementById('showAllBtn');
+
+const userDiv = document.getElementById('userDiv');
+const adminDiv = document.getElementById('adminDiv');
+
+// --- Password toggle ---
+togglePasswordBtn?.addEventListener('click', ()=>{
+    const type = passwordInput.type==='password'?'text':'password';
+    passwordInput.type = type;
+    togglePasswordBtn.textContent = type==='password'?'Show':'Hide';
+});
+
+// --- JWT role ---
+function getRoleFromToken(token){
+    if(!token) return null;
+    try{
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return payload.role;
+    }catch(e){return null;}
+}
+
+// --- Fetch current user (normal user) ---
+async function fetchCurrentUser(){
+    const token = localStorage.getItem('access_token');
+    if(!token) return alert('Token missing');
+    try{
+        const res = await fetch('http://127.0.0.1:8000/user/seeAccount/',{
+            headers:{ 'Authorization':`Bearer ${token}` }
+        });
+        if(!res.ok) return console.error(await res.text());
+        const user = await res.json();
+        const tbody = document.getElementById('currentUserTableBody');
+        tbody.innerHTML = `
+            <tr class="bg-white divide-y divide-gray-200 text-black">
+                <td class="px-6 py-4">${user.id}</td>
+                <td class="px-6 py-4">${user.name}</td>
+                <td class="px-6 py-4">${user.email}</td>
+                <td class="px-6 py-4">${user.role}</td>
+                <td class="px-6 py-4">${user.phone}</td>
+                <td class="px-6 py-4">${user.create_by}</td>
+            </tr>
+        `;
+    }catch(e){console.error(e);}
+}
+
+// --- Fetch all users (admin) ---
+async function fetchAndDisplayUsers(){
+    const token = localStorage.getItem('access_token');
+    if(!token) return;
+    try{
+        const res = await fetch('http://127.0.0.1:8000/Admin_get_all/seeAccount/',{
+            headers:{ 'Authorization': `Bearer ${token}` }
+        });
+        if(!res.ok) return console.error(await res.text());
+        const users = await res.json();
+        renderUsersInTable(users);
+    }catch(e){console.error(e);}
+}
+
+function renderUsersInTable(users){
+    userTableBody.innerHTML = '';
+    if(!users || users.length===0){
+        userTableBody.innerHTML = `<tr><td colspan="7" class="text-center py-4 text-gray-500">No users found.</td></tr>`;
+        return;
+    }
+    users.forEach(u=>{
+        const row=document.createElement('tr');
+        row.innerHTML=`
+            <td class="px-6 py-4">${u.id}</td>
+            <td class="px-6 py-4">${u.name}</td>
+            <td class="px-6 py-4">${u.email}</td>
+            <td class="px-6 py-4">${u.role}</td>
+            <td class="px-6 py-4">${u.phone}</td>
+            <td class="px-6 py-4">${u.create_by}</td>
+            <td class="px-6 py-4">
+                <button class="editBtn text-blue-600 mr-2" 
+                    data-email="${u.email}" 
+                    data-name="${u.name}" 
+                    data-phone="${u.phone}" 
+                    data-role="${u.role}">Edit</button>
+                <button class="deleteBtn text-red-600" data-email="${u.email}">Delete</button>
+            </td>
+        `;
+        userTableBody.appendChild(row);
+    });
+}
+
+// --- Add/Edit Popup handlers ---
+addUserBtn?.addEventListener('click',()=>{ addUserForm.reset(); formError.textContent=''; showPopup(addPopup); });
+closeAddPopup?.addEventListener('click',()=>hidePopup(addPopup));
+closeEditPopup?.addEventListener('click',()=>hidePopup(editPopup));
+
+addPopup?.addEventListener('click', e=>{ if(e.target===addPopup) hidePopup(addPopup); });
+editPopup?.addEventListener('click', e=>{ if(e.target===editPopup) hidePopup(editPopup); });
+
+// --- Add User Submit ---
+addUserForm?.addEventListener('submit', async e=>{
+    e.preventDefault(); formError.textContent='';
+    const data={
+        name: addUserForm.querySelector('input[type="text"]').value,
+        email: addUserForm.querySelector('input[type="email"]').value,
+        phone: addUserForm.querySelector('input[type="tel"]').value,
+        password: passwordInput.value,
+        role: addUserForm.querySelector('select').value
+    };
+    if(!data.name || !data.email || !data.phone || !data.password || !data.role){ formError.textContent='All fields are required'; return;}
+    try{
+        const token = localStorage.getItem('access_token');
+        const res = await fetch('http://127.0.0.1:8000/Admin/createAccount/',{
+            method:'POST', headers:{ 'Content-Type':'application/json','Authorization':`Bearer ${token}`}, body:JSON.stringify(data)
+        });
+        if(!res.ok){ const err=await res.json(); formError.textContent=err.detail||'Error'; return;}
+        alert('Account created'); hidePopup(addPopup); fetchAndDisplayUsers();
+    }catch(e){ console.error(e); formError.textContent='Network error'; }
+});
+
+// --- Edit/Delete User ---
+userTableBody?.addEventListener('click', async e=>{
+    const target=e.target;
+    const email=target.dataset.email;
+    if(target.classList.contains('deleteBtn')){
+        if(!confirm('Delete this user?')) return;
+        try{
+            const token = localStorage.getItem('access_token');
+            const res = await fetch(`http://127.0.0.1:8000/Admin/deleteAccount/?Email=${encodeURIComponent(email)}`,{
+                method:'DELETE', headers:{ 'Authorization':`Bearer ${token}` }
+            });
+            if(!res.ok){ const err=await res.json().catch(()=>({detail:'Error'})); alert(err.detail); return;}
+            alert('User deleted'); fetchAndDisplayUsers();
+        }catch(e){console.error(e);}
+    } else if(target.classList.contains('editBtn')){
+        editEmail.value=target.dataset.email;
+        editName.value=target.dataset.name;
+        editPhone.value=target.dataset.phone;
+        editRole.value=target.dataset.role;
+        showPopup(editPopup);
+    }
+});
+
+// --- Edit Submit ---
+editUserForm?.addEventListener('submit', async e=>{
+    e.preventDefault(); editFormError.textContent='';
+    const data={ email: editEmail.value, name: editName.value, phone: editPhone.value, role: editRole.value };
+    if(!data.name || !data.phone || !data.role){ editFormError.textContent='All fields required'; return;}
+    try{
+        const token=localStorage.getItem('access_token');
+        const res=await fetch('http://127.0.0.1:8000/Admin/updateAccount/',{
+            method:'PUT', headers:{ 'Authorization':`Bearer ${token}`, 'Content-Type':'application/json'}, body:JSON.stringify(data)
+        });
+        if(!res.ok){ const err=await res.json().catch(()=>({detail:'Error'})); editFormError.textContent=err.detail; return;}
+        alert('User updated'); hidePopup(editPopup); fetchAndDisplayUsers();
+    }catch(e){console.error(e); editFormError.textContent='Network error';}
+});
+
+// --- Search/Show All ---
+searchBtn?.addEventListener('click', async ()=>{
+    const email=searchEmailInput.value.trim(); if(!email) return;
+    const token = localStorage.getItem('access_token');
+    try{
+        const res = await fetch(`http://127.0.0.1:8000/Admin/seeAccount/?Email=${encodeURIComponent(email)}`,{ headers:{'Authorization':`Bearer ${token}`}});
+        if(!res.ok){ alert('Not found'); return; }
+        const user=await res.json();
+        renderUsersInTable([user]);
+    }catch(e){console.error(e);}
+});
+showAllBtn?.addEventListener('click', fetchAndDisplayUsers);
+
+// --- On page load ---
+document.addEventListener('DOMContentLoaded', ()=>{
+    const token = localStorage.getItem('access_token');
+    const role = getRoleFromToken(token);
+    if(role==='admin'){ adminDiv.classList.remove('hidden'); fetchAndDisplayUsers(); }
+    else{ userDiv.classList.remove('hidden'); fetchCurrentUser(); }
+});
+</script>
+
+</body>
+</html>

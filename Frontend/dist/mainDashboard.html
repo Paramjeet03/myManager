@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="./stylesheet/output.css">
+  <link rel="shortcut icon" href="./graphics/google-tasks-logo-main-icon.png" type="image/x-icon">
+  <title>Dashboard - Report</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body class="bg-gray-900 text-white min-h-screen">
+
+  <header class="flex justify-between items-center px-6 py-3 bg-gray-800">
+    <div class="flex items-center space-x-3">
+      <img src="./graphics/google-tasks-logo-main-icon.png" alt="logo" class="w-12 h-12">
+      <h1 class="text-2xl font-bold">My Manager</h1>
+    </div>
+    <nav class="flex space-x-10 text-lg font-medium">
+      <a href="./Account.html" class="hover:text-blue-400">Account</a>
+      <a href="./Task.html" class="hover:text-blue-400">Task</a>
+      <a href="./log.html" class="hover:text-blue-400">Log</a>
+    </nav>
+  </header>
+
+  
+  <section class="px-10 py-12">
+    <h1 class="text-[100px] font-bold leading-none">Welcome Back</h1>
+    <h1 id="username" class="text-[100px] font-bold leading-none"></h1>
+  </section>
+<script> const token = localStorage.getItem("access_token"); 
+    if (token) { try { const payload = JSON.parse(atob(token.split(".")[1])); 
+    const username = payload.username || payload.sub || "User"; 
+    document.getElementById("username").textContent =username+" !!"; } 
+    catch (e) { console.error("Invalid token:", e); } } 
+</script>
+ 
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6 px-10 pb-10">
+ 
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Total Tasks</p>
+        <h2 id="totalTasks" class="text-2xl font-bold text-black">0</h2>
+      </div>
+      <div class="bg-blue-100 p-3 rounded-lg text-2xl">📋</div>
+    </div>
+
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Completed</p>
+        <h2 id="completedTasks" class="text-2xl font-bold text-green-600">0</h2>
+      </div>
+      <div class="bg-green-100 p-3 rounded-lg text-2xl">✅</div>
+    </div>
+
+   
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Pending</p>
+        <h2 id="pendingTasks" class="text-2xl font-bold text-orange-600">0</h2>
+      </div>
+      <div class="bg-orange-100 p-3 rounded-lg text-2xl">⏳</div>
+    </div>
+  </section>
+
+  <section class="grid grid-cols-1 md:grid-cols-3 gap-6 px-10 pb-10">
+
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Total Accounts </p>
+        <h2 id="totalAccounts" class="text-2xl font-bold text-black">0</h2>
+      </div>
+      <div class="bg-blue-100 p-3 rounded-lg text-2xl">👥</div>
+    </div>
+ 
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Total Users</p>
+        <h2 id="totalUsers" class="text-2xl font-bold text-black">0</h2>
+      </div>
+      <div class="bg-blue-100 p-3 rounded-lg text-2xl">👤</div>
+    </div>
+   
+    <div class="flex items-center justify-between bg-white shadow-md rounded-xl p-6">
+      <div>
+        <p class="text-gray-500 font-medium">Total Admin</p>
+        <h2 id="totalAdmin" class="text-2xl font-bold text-orange-600">0</h2>
+      </div>
+      <div class="bg-orange-100 p-3 rounded-lg text-2xl">👑</div>
+    </div>
+  </section>
+<script>
+    const t_task = document.getElementById("totalTasks");    
+    const c_task = document.getElementById("completedTasks");
+    const p_task = document.getElementById("pendingTasks");
+    const t_acc = document.getElementById("totalAccounts");
+    const t_adm = document.getElementById("totalAdmin");
+    const t_use = document.getElementById("totalUsers"); 
+
+    async function getdata() {
+        try {
+            const res = await fetch("http://127.0.0.1:8000/totalReport/", {
+                method: "GET",
+                headers: {
+                    "Authorization": `Bearer ${token}`,
+                    "Content-Type": "application/json"
+                }
+            });
+
+            if (!res.ok) {
+                throw new Error("Failed to fetch data: " + res.status);
+            }
+
+            const data = await res.json();
+
+            t_task.textContent = data.Total_task;
+            c_task.textContent = data.Total_Done_project;
+            p_task.textContent = data.Total_pending;
+            t_acc.textContent = data.Total_account;
+            t_adm.textContent = data.Total_admin;
+            t_use.textContent = data.Total_user;
+
+        } catch (err) {
+            console.error("Error loading dashboard data:", err);
+        }
+    }
+
+    getdata();
+</script>
+
+<section>
+    <h2 class="text-[50px] px-11 underline font-bold leading-none">Graph</h2>
+    <div class="bg-white rounded-2xl w-1/2 mx-auto h-[40%]">
+        <canvas id="taskChart"></canvas>
+    </div>
+</section>    
+
+<script>
+  async function renderChart() {
+    try {
+      const res = await fetch("http://127.0.0.1:8000/totalReport/", {
+        method: "GET",
+        headers: {
+          "Authorization": `Bearer ${token}`,
+          "Content-Type": "application/json"
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to fetch data: " + res.status);
+      }
+
+      const data = await res.json();
+
+      const ctx = document.getElementById("taskChart").getContext("2d");
+
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Assigned', 'Done', 'Pending'],
+          datasets: [{
+            label: 'Number of Tasks',
+            data: [data.Total_task, data.Total_Done_project, data.Total_pending],
+            backgroundColor: ['#3B82F6', '#10B981', '#F59E0B'], // Blue, Green, Amber
+            borderRadius: 10
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { display: false },
+            title: {
+              display: true,
+              text: 'Task Distribution',
+              color: '#111827',
+              font: { size: 20 }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#111827', font: { weight: 'bold' } },
+              grid: { display: false }
+            },
+            y: {
+              beginAtZero: true,
+              ticks: { color: '#111827' },
+              grid: { color: '#E5E7EB' }
+            }
+          }
+        }
+      });
+    } catch (err) {
+      console.error("Error rendering chart:", err);
+    }
+  }
+
+  renderChart();
+</script>
+
+
+
+</body>
+</html>

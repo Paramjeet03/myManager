@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login Page - My Manager</title>
+  <link rel="stylesheet" href="./stylesheet/output.css">
+  <link rel="shortcut icon" href="./graphics/google-tasks-logo-main-icon.png" type="image/x-icon">
+</head>
+<body style="background-image: url('./graphics/untitled-design.webp');" class="min-h-screen min-w-screen bg-cover bg-center bg-no-repeat flex items-center justify-center">
+ 
+  <form action="" class="flex flex-col space-y-6 text-white bg-zinc-800 bg-opacity-90 p-10 rounded-2xl shadow-2xl w-[28rem]">
+      
+      <h1 class="text-3xl font-bold text-center">Login</h1>
+      
+      <div class="flex flex-col">
+          <label for="email" class="mb-2 text-lg">Email</label>
+          <input type="email" placeholder="Enter your email" id="email" required 
+                 class="p-3 rounded border border-gray-400 text-white hover:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+      </div>
+
+      <div class="flex flex-col">
+          <label for="password" class="mb-2 text-lg">Password</label>
+          <input type="password" placeholder="Password" id="password" required 
+                 class="p-3 rounded border border-gray-400 hover:border-blue-500 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+      </div>
+      <h2 id="errormsg" class="bg-red-500 text-white text-center rounded-2xl"></h2>
+      <button id ="loginbtn" type="submit" class="bg-blue-500 hover:bg-blue-600 py-3 rounded font-semibold text-lg transition">
+        Login
+      </button>
+      
+  </form>
+<script>
+const loginbtn = document.getElementById("loginbtn");
+
+loginbtn.addEventListener("click", async function(e) {
+    e.preventDefault();
+
+    const email = document.querySelector("input[type=email]").value;
+    const password = document.querySelector("input[type=password]").value;
+    const errormsg = document.getElementById("errormsg");
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/login/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json(); 
+        errormsg.textContent = "";
+
+        if (!res.ok) {
+            console.log(data.detail)
+            errormsg.textContent = data.detail.msg || "Login failed"; 
+        } else {
+            const token = data.access_token;
+            localStorage.setItem("access_token", token);
+            window.location.href="./mainDashboard.html";
+        }
+
+    } catch (error) {
+        console.error("Error:", error);
+        errormsg.textContent = "Login error: " + error.message;
+    }
+});
+</script>
+</body>
+</html>
+

@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyManager - Logs</title>
+  <link rel="stylesheet" href="./stylesheet/output.css">
+  <link rel="shortcut icon" href="./graphics/google-tasks-logo-main-icon.png" type="image/x-icon">
+</head>
+<body class="bg-gray-900 text-white">
+
+<header class="flex justify-between items-center px-6 py-3 bg-gray-800">
+  <div class="flex items-center space-x-3">
+    <img src="./graphics/google-tasks-logo-main-icon.png" alt="logo" class="w-12 h-12">
+    <h1 class="text-2xl font-bold">My Manager</h1>
+  </div>
+  <nav class="flex space-x-10 text-lg font-medium">
+    <a href="./mainDashboard.html" class="hover:text-blue-400">Dashboard</a>
+    <a href="./Task.html" class="hover:text-blue-400">Task</a>
+    <a href="./Account.html" class="hover:text-blue-400">Account</a>
+  </nav>
+</header>
+
+<!-- Add Log Modal (User Only) -->
+<div id="addLogModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-[28rem] shadow-lg">
+    <h2 class="text-2xl font-bold mb-4 text-black">Add New Log</h2>
+    <form id="addLogForm" class="space-y-4 text-black">
+      <div>
+        <label class="block text-black font-medium">Task ID</label>
+        <input type="number" id="log_task_id" class="w-full border rounded px-3 py-2 text-black" required placeholder="Enter numeric Task ID">
+      </div>
+      <div>
+        <label class="block text-black font-medium">Status</label>
+        <textarea id="log_status" class="w-full border rounded px-3 py-2 text-black" required placeholder="Enter log description/status"></textarea>
+      </div>
+      <div>
+        <label class="block text-black font-medium">Login Time</label>
+        <input type="text" id="log_login_time" class="w-full border rounded px-3 py-2 text-black" required placeholder="YYYY-MM-DD HH:MM:SS" value="00-00-00 00:00:00">
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button type="button" id="closeLogModalBtn" class="bg-gray-400 px-4 py-2 rounded text-white">Cancel</button>
+        <button type="submit" class="bg-[#882adb] px-4 py-2 rounded text-white">Add Log</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- Update Log Modal -->
+<div id="updateLogPopup" class="fixed z-20 inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+    <h2 class="text-xl font-bold mb-4 text-black">Update Log</h2>
+
+    <form id="updateLogForm" class="space-y-3">
+      <input type="hidden" id="updateLogId">
+      <div>
+        <label for="updateLogTitle" class="block text-sm font-medium text-black">Title</label>
+        <input type="text" id="updateLogTitle" class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div>
+        <label for="updateLogDescription" class="block text-sm font-medium text-black">Description</label>
+        <textarea id="updateLogDescription" class="w-full border rounded px-2 py-1 text-black"></textarea>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-4">
+        <button type="button" onclick="closeUpdateLogPopup()" class="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Admin Logs Table -->
+<div id="adminLogDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+  <div class="bg-[#882adb] text-white rounded-t-3xl p-6 flex items-center justify-between">
+    <h2 class="text-2xl font-bold">All Logs</h2>
+  </div>
+
+  <!-- Search bar -->
+  <div class="p-6 flex items-center space-x-4">
+    <input type="number" id="adminLogSearch" placeholder="Search by User ID" 
+           class="border rounded px-3 py-2 text-gray-900 w-48">
+    <button id="adminSearchBtn" class="bg-[#882adb] text-white px-4 py-2 rounded hover:bg-purple-700">Search</button>
+    <button id="adminResetBtn" class="bg-gray-400 text-white px-4 py-2 rounded hover:bg-gray-500">Reset</button>
+  </div>
+
+  <section class="p-6 text-gray-900 flex-1 flex flex-col">
+    <div class="max-h-[70%] overflow-y-auto rounded-lg shadow flex-1">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 sticky top-0 z-15">
+          <tr>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Log ID</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status / Description</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Name</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Email</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login Time</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logout Time</th>
+               <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminLogTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+
+
+
+<!-- User Logs Table -->
+<div id="userLogDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+  <div class="bg-blue-600 text-white rounded-t-3xl p-6 flex items-center justify-between">
+    <h2 class="text-2xl font-bold">My Logs</h2>
+    <button id="addLogBtn" class="bg-white text-[#882adb] rounded-lg px-4 py-2 font-semibold hover:bg-gray-200 hover:shadow-lg">+ Add Log</button>
+  </div>
+  <section class="p-6 text-gray-900 flex-1 flex flex-col">
+    <div class="max-h-[70%] overflow-y-auto rounded-lg shadow flex-1">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 sticky top-0 z-15">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Log ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Login Time</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Logout Time</th>
+          </tr>
+        </thead>
+        <tbody id="userLogTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+  </section>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) return alert('Token missing');
+
+  const adminLogDiv = document.getElementById('adminLogDiv');
+  const userLogDiv = document.getElementById('userLogDiv');
+  const adminLogTableBody = document.getElementById('adminLogTableBody');
+  const userLogTableBody = document.getElementById('userLogTableBody');
+
+  const role = JSON.parse(atob(token.split('.')[1])).role;
+
+
+
+
+// --- Fetch User Logs ---
+async function fetchUserLogs() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return alert("Token missing!");
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/User/getLog/", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "accept": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("Failed to fetch logs:", err);
+            return;
+        }
+
+        const logs = await res.json();
+        const tbody = document.getElementById("userLogTableBody");
+        tbody.innerHTML = '';
+
+        if (!logs || logs.length === 0) {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td class="px-6 py-4 text-center" colspan="6">No logs added</td>`;
+            tbody.appendChild(row);
+            return;
+        }
+
+        logs.forEach(log => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="px-6 py-4">${log.log_idx}</td>
+                <td class="px-6 py-4">${log.User_Name}</td>
+                <td class="px-6 py-4">${log.User_email}</td>
+                <td class="px-6 py-4">${log.status}</td>
+                <td class="px-6 py-4">${log.login_time || '-'}</td>
+                <td class="px-6 py-4">${log.logout_time || '-'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    } catch (e) {
+        console.error("Network error:", e);
+    }
+}
+
+// --- Admin Logs display (already working, just make sure keys match backend) ---
+async function fetchAdminLogs() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return alert("Token missing!");
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/Admin/getLogs/", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "accept": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("Failed to fetch admin logs:", err);
+            return;
+        }
+
+        const logs = await res.json();
+        allAdminLogs = logs; // store for search/reset
+
+        displayAdminLogs(logs);
+    } catch (e) {
+        console.error("Network error:", e);
+    }
+}
+
+
+// --- Display Admin Logs ---
+async function fetchAdminLogs() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return alert("Token missing!");
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/admin/getAllLog/', {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "accept": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("Failed to fetch admin logs:", err);
+            return;
+        }
+
+        const logs = await res.json();
+        const tbody = document.getElementById("adminLogTableBody");
+        tbody.innerHTML = '';
+
+        if (!logs || logs.length === 0) {
+            const row = document.createElement("tr");
+            row.innerHTML = `<td class="px-6 py-4 text-center" colspan="8">No logs found</td>`;
+            tbody.appendChild(row);
+            return;
+        }
+
+        logs.forEach(log => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center">${log.log_idx ?? '-'}</td>
+                <td class="px-6 py-4 text-center">${log.User_id ?? '-'}</td>
+                <td class="px-6 py-4">${log.status ?? '-'}</td>
+                <td class="px-6 py-4">${log.User_Name ?? '-'}</td>
+                <td class="px-6 py-4">${log.User_email ?? '-'}</td>
+                <td class="px-6 py-4 text-center">${log.login_time ?? '-'}</td>
+                <td class="px-6 py-4 text-center">${log.logout_time ?? '-'}</td>
+                <td class="px-6 py-4 text-center">
+                    <button class="deleteLogBtn text-red-600 hover:underline">Delete</button>
+                </td>
+            `;
+            tbody.appendChild(row);
+
+            row.querySelector('.deleteLogBtn').addEventListener('click', () => deleteLog(log.log_idx));
+        });
+
+        // store logs for search/reset
+        window.allAdminLogs = logs;
+
+    } catch (e) {
+        console.error("Network error:", e);
+    }
+}
+
+// Search / Reset functionality
+async function filterAdminLogs(logId) {
+    const token = localStorage.getItem('access_token');
+    if (!token) return alert('Token missing!');
+
+    try {
+        const res = await fetch('http://127.0.0.1:8000/Admin/getLog/', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json',
+                'accept': 'application/json'
+            },
+            body: JSON.stringify({ id: logId })
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error('Failed to filter admin logs:', err);
+            return;
+        }
+
+        const logs = await res.json();
+        displayAdminLogs(logs); // Use your existing function to populate the table
+
+    } catch (e) {
+        console.error('Network error:', e);
+    }
+}
+
+function displayAdminLogs(logs) {
+    const tbody = document.getElementById('adminLogTableBody');
+    tbody.innerHTML = '';
+
+    if (!logs || logs.length === 0) {
+        const row = document.createElement('tr');
+        row.innerHTML = `<td class="px-6 py-4 text-center" colspan="8">No logs found</td>`;
+        tbody.appendChild(row);
+        return;
+    }
+
+    logs.forEach(log => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td class="px-6 py-4 text-center">${log.log_idx ?? '-'}</td>
+            <td class="px-6 py-4 text-center">${log.User_id ?? '-'}</td>
+            <td class="px-6 py-4">${log.status ?? '-'}</td>
+            <td class="px-6 py-4">${log.User_Name ?? '-'}</td>
+            <td class="px-6 py-4">${log.User_email ?? '-'}</td>
+            <td class="px-6 py-4 text-center">${log.login_time ?? '-'}</td>
+            <td class="px-6 py-4 text-center">${log.logout_time ?? '-'}</td>
+            <td class="px-6 py-4 text-center">
+                <button class="deleteLogBtn text-red-600 hover:underline">Delete</button>
+            </td>
+        `;
+        tbody.appendChild(row);
+
+        // Add delete handler
+        row.querySelector('.deleteLogBtn').addEventListener('click', () => deleteLog(log.log_idx));
+    });
+}
+
+// Example usage with search input
+document.getElementById('adminSearchBtn').addEventListener('click', () => {
+    const searchId = parseInt(document.getElementById('adminLogSearch').value);
+    if (isNaN(searchId)) {
+        displayAdminLogs(window.allAdminLogs);
+        return;
+    }
+
+    const filteredLogs = window.allAdminLogs.filter(log => log.User_id === searchId);
+
+    if (filteredLogs.length === 0) {
+        // Show "No record found"
+        const tbody = document.getElementById('adminLogTableBody');
+        tbody.innerHTML = `<tr><td class="px-6 py-4 text-center" colspan="8">No record found</td></tr>`;
+    } else {
+        displayAdminLogs(filteredLogs);
+    }
+});
+
+document.getElementById('adminResetBtn').addEventListener('click', () => {
+    document.getElementById('adminLogSearch').value = '';
+    displayAdminLogs(window.allAdminLogs);
+});
+
+
+document.getElementById('adminResetBtn').addEventListener('click', () => {
+    adminLogSearch.value = '';
+    displayAdminLogs(allAdminLogs);
+});
+
+
+  // --- Fetch User Logs ---
+async function fetchUserLogs() {
+    const token = localStorage.getItem('access_token');
+    if (!token) return alert("Token missing!");
+
+    try {
+        const res = await fetch("http://127.0.0.1:8000/User/getLog/", {
+            method: "GET",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "accept": "application/json"
+            }
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            console.error("Failed to fetch logs:", err);
+            return;
+        }
+
+        const logs = await res.json();
+        const tbody = document.getElementById("userLogTableBody");
+        tbody.innerHTML = '';
+
+        if (!logs || logs.length === 0) {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="px-6 py-4 text-center" colspan="6">No logs added</td>
+            `;
+            tbody.appendChild(row);
+            return;
+        }
+
+        logs.forEach(log => {
+            const row = document.createElement("tr");
+            row.innerHTML = `
+                <td class="px-6 py-4">${log.log_idx}</td>
+                <td class="px-6 py-4">${log.User_name}</td>
+                <td class="px-6 py-4">${log.User_email}</td>
+                <td class="px-6 py-4">${log.status}</td>
+                <td class="px-6 py-4">${log.login_time || '-'}</td>
+                <td class="px-6 py-4">${log.logout_time || '-'}</td>
+            `;
+            tbody.appendChild(row);
+        });
+
+    } catch (e) {
+        console.error("Network error:", e);
+    }
+}
+
+
+
+
+  // --- Open / Close Log Modals ---
+  const addLogBtn = document.getElementById('addLogBtn');
+  const addLogModal = document.getElementById('addLogModal');
+  const closeLogModalBtn = document.getElementById('closeLogModalBtn');
+  addLogBtn?.addEventListener('click',()=>addLogModal.classList.remove('hidden'));
+  closeLogModalBtn?.addEventListener('click',()=>addLogModal.classList.add('hidden'));
+
+  function openUpdateLogPopup(log){
+    document.getElementById('updateLogId').value=log.id;
+    document.getElementById('updateLogTitle').value=log.title;
+    document.getElementById('updateLogDescription').value=log.description;
+    document.getElementById('updateLogPopup').classList.remove('hidden');
+  }
+  function closeUpdateLogPopup(){ document.getElementById('updateLogPopup').classList.add('hidden'); }
+
+  // --- Add Log Submit ---
+document.getElementById('addLogForm')?.addEventListener('submit', async e => {
+  e.preventDefault();
+
+  const payload = {
+    task_id: parseInt(document.getElementById('log_task_id').value), // numeric Task ID
+    status: document.getElementById('log_status').value,             // status/description
+    login_time: document.getElementById('log_login_time').value      // user-entered login time
+  };
+
+  try {
+    const res = await fetch('http://127.0.0.1:8000/User/addLog/', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(payload)
+    });
+
+    if(res.ok){ 
+      alert('✅ Log added'); 
+      addLogModal.classList.add('hidden'); 
+      // reset form after adding
+      document.getElementById('addLogForm').reset();
+      document.getElementById('log_login_time').value = "00-00-00 00:00:00"; 
+      fetchUserLogs(); 
+    } else {
+      const err = await res.json().catch(() => ({}));
+      console.error(err);
+      alert('❌ Failed to add log');
+    }
+  } catch(e){ 
+    alert('Network error'); 
+    console.error(e);
+  }
+});
+addLogBtn?.addEventListener('click', () => {
+  const loginInput = document.getElementById('log_login_time');
+  loginInput.value = new Date().toISOString(); // current time in ISO format
+  addLogModal.classList.remove('hidden');
+});
+
+  
+
+  
+
+  // --- Role Check ---
+  if(role==='admin'){ adminLogDiv.classList.remove('hidden'); fetchAdminLogs(); }
+  else{ userLogDiv.classList.remove('hidden'); fetchUserLogs(); }
+
+});
+</script>
+
+</body>
+</html>

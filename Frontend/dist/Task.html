@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MyManager - Tasks</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="shortcut icon" href="./graphics/google-tasks-logo-main-icon.png" type="image/x-icon">
+</head>
+<body class="bg-gray-900 text-white">
+
+<header class="flex justify-between items-center px-6 py-3 bg-gray-800">
+  <div class="flex items-center space-x-3">
+    <img src="./graphics/google-tasks-logo-main-icon.png" alt="logo" class="w-12 h-12">
+    <h1 class="text-2xl font-bold">My Manager</h1>
+  </div>
+  <nav class="flex space-x-10 text-lg font-medium">
+    <a href="./mainDashboard.html" class="hover:text-blue-400">Dashboard(Report)</a>
+    <a href="./Account.html" class="hover:text-blue-400">Account</a>
+    <a href="./log.html" class="hover:text-blue-400">Log</a>
+  </nav>
+</header>
+
+<!-- Add Task Modal -->
+<div id="addTaskModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl p-6 w-[28rem] shadow-lg">
+    <h2 class="text-2xl font-bold mb-4 text-black">Add New Task</h2>
+    <form id="addTaskForm" class="space-y-4 text-black">
+      <div>
+        <label class="block text-black">Assigned To (User ID)</label>
+        <input type="number" id="assigned_to" class="w-full border rounded px-3 py-2 text-black" required>
+      </div>
+      <div>
+        <label class="block text-black">Title</label>
+        <input type="text" id="task_title" class="w-full border rounded px-3 py-2 text-black" required>
+      </div>
+      <div>
+        <label class="block text-black">Description</label>
+        <textarea id="task_description" class="w-full border rounded px-3 py-2 text-black" required></textarea>
+      </div>
+      <div>
+        <label class="block text-black">Status</label>
+        <select id="task_status" class="w-full border rounded px-3 py-2 text-black">
+          <option value="given">Given</option>
+          <option value="start">Start</option>
+          <option value="pending">Pending</option>
+          <option value="error">Error</option>
+          <option value="testing">Testing</option>
+          <option value="debug">Debug</option>
+          <option value="deployment">Deployment</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+      <div class="flex justify-end space-x-3">
+        <button type="button" id="closeModalBtn" class="bg-gray-400 px-4 py-2 rounded text-white">Cancel</button>
+        <button type="submit" class="bg-[#882adb] px-4 py-2 rounded text-white">Add Task</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+<!-- Update Task Popup -->
+<div id="updatePopup" class="fixed z-20 inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden">
+  <div class="bg-white p-6 rounded-lg shadow-lg w-96">
+    <h2 class="text-xl font-bold mb-4 text-black">Update Task</h2>
+
+    <form id="updateTaskForm" class="space-y-3">
+      <input type="hidden" id="updateTaskId">
+
+      <div>
+        <label for="updateAssignedTo" class="block text-sm font-medium text-black">Assigned To (User ID)</label>
+        <input type="number" id="updateAssignedTo" class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div>
+        <label for="updateTitle" class="block text-sm font-medium text-black">Title</label>
+        <input type="text" id="updateTitle" class="w-full border rounded px-2 py-1 text-black">
+      </div>
+
+      <div>
+        <label for="updateDescription" class="block text-sm font-medium text-black">Description</label>
+        <textarea id="updateDescription" class="w-full border rounded px-2 py-1 text-black"></textarea>
+      </div>
+
+      <div>
+        <label for="updateStatus" class="block text-sm font-medium text-black">Status</label>
+        <select id="updateStatus" class="w-full border rounded px-2 py-1 text-black">
+          <option value="given">Given</option>
+          <option value="start">Start</option>
+          <option value="pending">Pending</option>
+          <option value="error">Error</option>
+          <option value="testing">Testing</option>
+          <option value="debug">Debug</option>
+          <option value="deployment">Deployment</option>
+          <option value="done">Done</option>
+        </select>
+      </div>
+
+      <div class="flex justify-end space-x-2 mt-4">
+        <button type="button" onclick="closeUpdatePopup()" class="bg-gray-400 text-white px-4 py-2 rounded">Cancel</button>
+        <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Update</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+
+
+<!-- Admin Task Div -->
+<div id="adminTaskDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+  <div class="bg-[#882adb] text-white rounded-t-3xl p-6 flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold">Task Management</h2>
+      <p class="mt-1">Manage all tasks: Add, Edit, Delete, or Assign tasks.</p>
+    </div>
+    <button id="addTaskBtn" class="bg-white text-[#882adb] rounded-lg px-4 py-2 font-semibold hover:bg-gray-200 hover:shadow-lg">+ Add Task</button>
+  </div>
+
+  <section class="p-6 text-gray-900 flex-1 flex flex-col">
+    <div class="flex items-center space-x-4 mb-4">
+      <input type="text" id="searchTaskInput" placeholder="Search by User Mail" class="flex-1 p-2 rounded border border-gray-300">
+      <button id="searchTaskBtn" class="bg-[#882adb] text-white rounded-lg px-4 py-2 font-semibold hover:bg-[#6a1bbd]">Search</button>
+      <button id="showAllTaskBtn" class="bg-gray-500 text-white rounded-lg px-4 py-2 font-semibold hover:bg-gray-600">Show All</button>
+    </div>
+    <div class="max-h-[28rem] overflow-y-auto rounded-lg shadow flex-1">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 sticky top-0 z-15">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To (ID)</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given On</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given By</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="adminTaskTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<!-- User Task Div -->
+<div id="userTaskDiv" class="bg-white rounded-3xl mx-auto h-[80vh] w-[90vw] p-0 mt-6 flex flex-col hidden">
+  <div class="bg-blue-600 text-white rounded-t-3xl p-6 flex items-center justify-between">
+    <div>
+      <h2 class="text-2xl font-bold">My Tasks</h2>
+      <p class="mt-1">Tasks assigned to you.</p>
+    </div>
+  </div>
+
+  <section class="p-6 text-gray-900 flex-1 flex flex-col">
+    <div class="max-h-[52%] overflow-y-auto rounded-lg shadow flex-1">
+      <table class="min-w-full divide-y divide-gray-200">
+        <thead class="bg-gray-50 sticky top-0 z-15">
+          <tr>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Task ID</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Title</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Assigned To (ID)</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given On</th>
+            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Given By</th>
+          </tr>
+        </thead>
+        <tbody id="userTaskTableBody" class="bg-white divide-y divide-gray-200"></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+
+
+<script>
+document.addEventListener('DOMContentLoaded', async () => {
+  const token = localStorage.getItem('access_token');
+  if (!token) return alert('Token missing');
+
+  const adminTaskDiv = document.getElementById('adminTaskDiv');
+  const userTaskDiv = document.getElementById('userTaskDiv');
+  const adminTaskTableBody = document.getElementById('adminTaskTableBody');
+  const userTaskTableBody = document.getElementById('userTaskTableBody');
+
+  // Decode JWT role
+  const getRoleFromToken = (token) => {
+    try { return JSON.parse(atob(token.split('.')[1])).role; }
+    catch(e){ console.error("Token decode error", e); return null; }
+  };
+  const role = getRoleFromToken(token);
+
+ 
+
+  
+  // --- Fetch Admin Tasks (works for both show all + search) ---
+  async function fetchAdminTasks(url="http://127.0.0.1:8000/Admin/Get_all/") {
+    try {
+      const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+      if (!res.ok) {
+        adminTaskTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Failed to load tasks</td></tr>`;
+        return;
+      }
+
+      let data = await res.json();
+      console.log("🔍 Raw API response:", data);
+
+      // ✅ Normalize all possible formats
+      let tasks = [];
+      if (Array.isArray(data)) {
+        tasks = data;
+      } else if (data.tasks && Array.isArray(data.tasks)) {
+        tasks = data.tasks;
+      } else if (data.task) {
+        tasks = [data.task];
+      } else if (typeof data === "object" && Object.keys(data).length > 0) {
+        tasks = [data];
+      }
+
+      adminTaskTableBody.innerHTML = '';
+
+      if (tasks.length === 0) {
+        adminTaskTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">No tasks found.</td></tr>`;
+        return;
+      }
+
+      tasks.forEach(task => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td class="px-6 py-4">${task.task_id ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.title ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.description ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.status ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.assigned_to ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.name ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.email ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.given_on ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.given_by ?? "N/A"}</td>
+          <td class="px-6 py-4">
+            <button class="editTaskBtn text-blue-600 hover:underline mr-4">Edit</button>
+            <button class="deleteTaskBtn text-red-600 hover:underline">Delete</button>
+          </td>
+        `;
+        adminTaskTableBody.appendChild(row);
+
+        row.querySelector('.deleteTaskBtn').addEventListener('click', () => deleteTask(task.task_id));
+        row.querySelector('.editTaskBtn').addEventListener('click', () => openUpdatePopup(task));
+
+      });
+    } catch(e) {
+      console.error("❌ Fetch error:", e);
+      adminTaskTableBody.innerHTML = `<tr><td colspan="10" class="text-center py-4 text-gray-500">Network error</td></tr>`;
+    }
+  }
+
+  // --- Search by Email ---
+  document.getElementById('searchTaskBtn').addEventListener('click', () => {
+    const email = document.getElementById('searchTaskInput').value.trim();
+    if (!email) return alert("Enter email to search");
+    fetchAdminTasks(`http://127.0.0.1:8000/Admin/Get_all_by_mail/?Email=${encodeURIComponent(email)}`);
+  });
+
+  document.getElementById('showAllTaskBtn').addEventListener('click', () => fetchAdminTasks());
+
+  // --- Delete Task ---
+ async function deleteTask(task_id) {
+  if (!confirm("Delete this task?")) return;
+
+  const token = localStorage.getItem("access_token");
+  if (!token) {
+    alert("No token found. Please login again.");
+    return;
+  }
+
+  try {
+    const res = await fetch("http://127.0.0.1:8000/Admin/task_deletion/", {
+      method: "DELETE",
+      headers: {
+        "Authorization": `Bearer ${token}`,
+        "Content-Type": "application/json",
+        "accept": "application/json"
+      },
+      body: JSON.stringify({ id: task_id })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return alert("Failed to delete task: " + (err.detail || res.statusText));
+    }
+
+    alert("Task deleted!");
+    fetchAdminTasks(); // reload tasks
+  } catch (e) {
+    alert("Network error: " + e.message);
+  }
+}
+
+
+function openUpdatePopup(task) {
+    document.getElementById("updateTaskId").value = task.id;
+    document.getElementById("updateTitle").value = task.title;
+    document.getElementById("updateDescription").value = task.description;
+    document.getElementById("updateStatus").value = task.status;
+
+    document.getElementById("updatePopup").classList.remove("hidden");
+  }
+
+  // Close Popup
+  function closeUpdatePopup() {
+    document.getElementById("updatePopup").classList.add("hidden");
+  }
+
+  // Handle Update Submit
+  function openUpdatePopup(task) {
+    document.getElementById("updateTaskId").value = task.task_id;
+    document.getElementById("updateAssignedTo").value = task.assigned_to ?? "";
+    document.getElementById("updateTitle").value = task.title ?? "";
+    document.getElementById("updateDescription").value = task.description ?? "";
+    document.getElementById("updateStatus").value = task.status ?? "";
+
+    document.getElementById("updatePopup").classList.remove("hidden");
+}
+
+// Close Popup
+function closeUpdatePopup() {
+    document.getElementById("updatePopup").classList.add("hidden");
+}
+
+// Handle Update Submit
+document.getElementById("updateTaskForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+
+    const taskId = parseInt(document.getElementById("updateTaskId").value);
+    const payload = {
+        assigned_to: parseInt(document.getElementById("updateAssignedTo").value) || null,
+        title: document.getElementById("updateTitle").value || null,
+        description: document.getElementById("updateDescription").value || null,
+        status: document.getElementById("updateStatus").value || null
+    };
+
+    try {
+        const res = await fetch(`http://127.0.0.1:8000/Admin/taskUpdate/${taskId}`, {
+            method: "PUT",
+            headers: {
+                "Authorization": `Bearer ${localStorage.getItem('access_token')}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!res.ok) {
+            const err = await res.json().catch(() => ({}));
+            return alert("❌ Failed to update task: " + (err.detail || res.statusText));
+        }
+
+        alert("✅ Task updated successfully!");
+        closeUpdatePopup();
+        fetchAdminTasks(); // Refresh the admin task table
+    } catch (err) {
+        alert("Network error: " + err.message);
+    }
+});
+
+document.getElementById("updatePopup").querySelector('button').addEventListener('click', () => {
+  document.getElementById("updatePopup").classList.add("hidden");
+});
+
+
+  // --- User Tasks ---
+  async function fetchUserTasks(){
+    try {
+      const res = await fetch('http://127.0.0.1:8000/User/seeTask/', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      if(!res.ok){ userTaskTableBody.innerHTML=`<tr><td colspan="9" class="text-center py-4">No tasks</td></tr>`; return; }
+      const tasks = await res.json();
+      userTaskTableBody.innerHTML='';
+      tasks.forEach(task=>{
+        const row=document.createElement('tr');
+        row.innerHTML=`
+          <td class="px-6 py-4">${task.task_id ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.title ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.description ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.status ?? "N/A"}</td>
+          <td class="px-6 py-4">${task.assigned_to ?? 'N/A'}</td>
+          <td class="px-6 py-4">${task.name ?? 'N/A'}</td>
+          <td class="px-6 py-4">${task.email ?? 'N/A'}</td>
+          <td class="px-6 py-4">${task.given_on ?? 'N/A'}</td>
+          <td class="px-6 py-4">${task.given_by ?? 'N/A'}</td>`;
+        userTaskTableBody.appendChild(row);
+      });
+    } catch(e){ 
+      console.error("❌ User fetch error", e);
+      userTaskTableBody.innerHTML=`<tr><td colspan="9">Network error</td></tr>`;
+    }
+  }
+
+    // --- Add Task Modal ---
+  const addTaskBtn = document.getElementById('addTaskBtn');
+  const addTaskModal = document.getElementById('addTaskModal');
+  const closeModalBtn = document.getElementById('closeModalBtn');
+  const addTaskForm = document.getElementById('addTaskForm');
+
+  addTaskBtn.addEventListener('click', () => {
+    addTaskModal.classList.remove('hidden');
+  });
+
+  closeModalBtn.addEventListener('click', () => {
+    addTaskModal.classList.add('hidden');
+  });
+
+  // --- Submit New Task ---
+  addTaskForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const newTask = {
+      assigned_to: parseInt(document.getElementById('assigned_to').value),
+      title: document.getElementById('task_title').value,
+      description: document.getElementById('task_description').value,
+      status: document.getElementById('task_status').value
+    };
+
+    try {
+      const res = await fetch("http://127.0.0.1:8000/Admin/assignTask/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify(newTask)
+      });
+
+      if (!res.ok) {
+        const err = await res.text();
+        alert("❌ Failed to add task: " + err);
+        return;
+      }
+
+      alert("✅ Task added successfully!");
+      addTaskModal.classList.add('hidden');
+      addTaskForm.reset();
+      fetchAdminTasks(); // refresh table
+    } catch (e) {
+      alert("Network error while adding task");
+    }
+  });
+
+
+  // --- Role check ---
+  if(role==='admin'){ adminTaskDiv.classList.remove('hidden'); fetchAdminTasks(); }
+  else { userTaskDiv.classList.remove('hidden'); fetchUserTasks(); }
+});
+</script>
+
+</body>
+</html>
+
